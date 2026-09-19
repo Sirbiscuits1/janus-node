@@ -30,9 +30,10 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
 import { createServerWallet } from './lib/wallet.js'
+import { resolveConfigPath } from './lib/paths.js'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
-const CONFIG_PATH = path.join(HERE, 'janus-node.json')
+const CONFIG_PATH = resolveConfigPath()
 
 /** Left behind by --all so refunds keep working. */
 export const REFUND_RESERVE_SATS = 5_000

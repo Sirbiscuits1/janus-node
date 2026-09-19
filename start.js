@@ -19,10 +19,11 @@ import { ListingLifecycle } from './lib/autopublish.js'
 import { detectOllama, DEFAULT_OLLAMA_URL } from './lib/hardware.js'
 import { findFreePort } from './lib/port.js'
 import { CMD } from './lib/command.js'
+import { resolveConfigPath, STATE_DIR as STATE_DIR_ } from './lib/paths.js'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
-const CONFIG_PATH = path.join(HERE, 'janus-node.json')
-const STATE_DIR = path.join(HERE, '.janus')
+const CONFIG_PATH = resolveConfigPath()
+const STATE_DIR = STATE_DIR_
 
 const c = {
   dim: (s) => `\x1b[2m${s}\x1b[0m`,

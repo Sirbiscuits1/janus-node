@@ -21,9 +21,10 @@ import os from 'node:os'
 import { inspectMachine, ollamaOpenAIBase, mapQuantization, DEFAULT_OLLAMA_URL } from './lib/hardware.js'
 import { isCloudflaredInstalled, cloudflaredInstallHint } from './lib/tunnel.js'
 import { CMD } from './lib/command.js'
+import { resolveConfigPath, JANUS_HOME } from './lib/paths.js'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
-const CONFIG_PATH = path.join(HERE, 'janus-node.json')
+const CONFIG_PATH = resolveConfigPath()
 
 const OVERLAY_URL = process.env.OVERLAY_URL ?? 'https://overlay.janusprotocol.xyz'
 const LOOKUP_SERVICE = process.env.LOOKUP_SERVICE ?? 'ls_compute_dev'

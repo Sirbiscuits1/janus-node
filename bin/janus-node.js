@@ -17,10 +17,11 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { CMD } from '../lib/command.js'
+import { resolveConfigPath } from '../lib/paths.js'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.join(HERE, '..')
-const CONFIG_PATH = path.join(ROOT, 'janus-node.json')
+const CONFIG_PATH = resolveConfigPath()
 
 const c = {
   dim: (s) => `\x1b[2m${s}\x1b[0m`,
