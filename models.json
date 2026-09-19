@@ -1,0 +1,70 @@
+{
+  "_comment": [
+    "Local catalogue used ONLY by scripts/publish-model.js and scripts/reprice.js.",
+    "It never ships to Render and the provider never reads it — the provider learns",
+    "its rates from the chain. So adding a model here costs nothing until you publish.",
+    "",
+    "upstreamUsdPerMInput / Output are what DEEPINFRA charges you. Your listing price",
+    "is this plus markupPct. VERIFY THESE against https://deepinfra.com/pricing before",
+    "publishing: a listing is a signed promise to sell at that price, and a wrong",
+    "figure means selling under cost one paid request at a time.",
+    "",
+    "Only non-reasoning models belong here. Reasoning models bill their thinking as",
+    "output tokens, which makes the ceiling unpredictable for the buyer."
+  ],
+
+  "defaults": {
+    "region": "us-east",
+    "maxOutputTokens": 4096,
+    "markupPct": 15,
+    "attestation": "none"
+  },
+
+  "models": [
+    {
+      "model": "mistralai/Mistral-Nemo-Instruct-2407",
+      "label": "Mistral Nemo",
+      "upstreamUsdPerMInput": 0.019,
+      "upstreamUsdPerMOutput": 0.03,
+      "contextTokens": 131072,
+      "quantization": "fp8",
+      "verified": false
+    },
+    {
+      "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+      "label": "Llama 3.1 8B Instruct",
+      "upstreamUsdPerMInput": 0.02,
+      "upstreamUsdPerMOutput": 0.05,
+      "contextTokens": 131072,
+      "quantization": "bf16",
+      "verified": false
+    },
+    {
+      "model": "Qwen/Qwen3.5-9B",
+      "label": "Qwen3.5 9B",
+      "upstreamUsdPerMInput": 0.10,
+      "upstreamUsdPerMOutput": 0.15,
+      "contextTokens": 262144,
+      "quantization": "bf16",
+      "verified": false
+    },
+    {
+      "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "label": "Llama 3.3 70B Instruct Turbo",
+      "upstreamUsdPerMInput": 0.10,
+      "upstreamUsdPerMOutput": 0.32,
+      "contextTokens": 131072,
+      "quantization": "fp8",
+      "verified": true
+    },
+    {
+      "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+      "label": "Llama 4 Scout",
+      "upstreamUsdPerMInput": 0.10,
+      "upstreamUsdPerMOutput": 0.30,
+      "contextTokens": 327680,
+      "quantization": "fp8",
+      "verified": false
+    }
+  ]
+}
