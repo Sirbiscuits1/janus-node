@@ -20,6 +20,7 @@ import os from 'node:os'
 
 import { inspectMachine, ollamaOpenAIBase, mapQuantization, DEFAULT_OLLAMA_URL } from './lib/hardware.js'
 import { isCloudflaredInstalled, cloudflaredInstallHint } from './lib/tunnel.js'
+import { CMD } from './lib/command.js'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const CONFIG_PATH = path.join(HERE, 'janus-node.json')
@@ -258,7 +259,7 @@ const main = async () => {
     say()
   }
   say(`  ${c.dim('─'.repeat(60))}`)
-  say(`  Then start earning with:  ${c.bold('npm start')}`)
+  say(`  Then start earning with:  ${c.bold(`${CMD} start`)}`)
   say()
 }
 

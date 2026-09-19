@@ -18,6 +18,7 @@ import { Tunnel } from './lib/tunnel.js'
 import { ListingLifecycle } from './lib/autopublish.js'
 import { detectOllama, DEFAULT_OLLAMA_URL } from './lib/hardware.js'
 import { findFreePort } from './lib/port.js'
+import { CMD } from './lib/command.js'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const CONFIG_PATH = path.join(HERE, 'janus-node.json')
@@ -38,7 +39,7 @@ const main = async () => {
     config = JSON.parse(await readFile(CONFIG_PATH, 'utf8'))
   } catch {
     say()
-    say(`  ${c.red('Not set up yet.')} Run this first:  ${c.bold('npm run setup')}`)
+    say(`  ${c.red('Not set up yet.')} Run this first:  ${c.bold(`${CMD} setup`)}`)
     say()
     process.exit(1)
   }
@@ -61,7 +62,7 @@ const main = async () => {
   if (!hasModel) {
     say()
     say(`  ${c.red(`"${config.model}" is no longer installed in Ollama.`)}`)
-    say(`  Either run ${c.bold(`ollama pull ${config.model}`)} or ${c.bold('npm run setup')} to pick another.`)
+    say(`  Either run ${c.bold(`ollama pull ${config.model}`)} or ${c.bold(`${CMD} setup`)} to pick another.`)
     say()
     process.exit(1)
   }

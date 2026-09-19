@@ -16,6 +16,7 @@ import { existsSync } from 'node:fs'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import { CMD } from '../lib/command.js'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.join(HERE, '..')
@@ -51,7 +52,7 @@ const showWhereYouAre = () => {
   if (!configured) {
     say(`  You have not set up yet. Start here:`)
     say()
-    say(`    ${c.gold('npx @janus/node setup')}`)
+    say(`    ${c.gold(`${CMD} setup`)}`)
     say()
     say(`  ${c.dim('It looks at your computer, picks a model it can run, checks')}`)
     say(`  ${c.dim('what others charge, and makes a wallet. One question.')}`)
@@ -68,9 +69,9 @@ const showWhereYouAre = () => {
 
   say(`  ${c.green('✓')} Set up${model ? ` · ${model}` : ''}`)
   say()
-  say(`  Go live:        ${c.gold('npx @janus/node start')}`)
-  say(`  Cash out:       ${c.dim('npx @janus/node withdraw --to <your address>')}`)
-  say(`  Change model:   ${c.dim('npx @janus/node setup')}`)
+  say(`  Go live:        ${c.gold(`${CMD} start`)}`)
+  say(`  Cash out:       ${c.dim(`${CMD} withdraw --to <your address>`)}`)
+  say(`  Change model:   ${c.dim(`${CMD} setup`)}`)
   say()
 }
 
