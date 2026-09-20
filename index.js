@@ -9,6 +9,9 @@ import { fetchBeef } from './lib/beef.js'
 import { RateCard } from './lib/ratecard.js'
 import { resolveModel, checkLimits, sendGuardError } from './lib/modelguard.js'
 import { corsMiddleware } from './lib/cors.js'
+import {
+  buildUpstreamBody, buildResponseMessage, checkResponseConsistency
+} from './lib/passthrough.js'
 
 const PORT = Number(process.env.PORT) || 8080
 const OVERLAY_URL = process.env.OVERLAY_URL ?? 'https://overlay.janusprotocol.xyz'
@@ -108,6 +111,20 @@ const main = async () => {
       return res.status(400).json({ error: { message: 'messages is required' } })
     }
 
+    // Fields we cannot price honestly are refused here, before any payment is
+    // taken. Refusing after would mean issuing a refund for something we could
+    // have caught for free. `extra` is everything we WILL forward.
+    const { extra, refused } = buildUpstreamBody(req.body)
+    if (refused.length > 0) {
+      return res.status(400).json({
+        error: {
+          type: 'unsupported_parameter',
+          message: `Not supported: ${refused.map((r) => r.field).join(', ')}`,
+          details: refused
+        }
+      })
+    }
+
     // Which model, and therefore which prices? An unlisted model is a 400, not a
     // 402 — we are never going to serve it, so inviting payment would be a lie.
     const resolved = resolveModel(req.body, rateCard)
@@ -161,6 +178,8 @@ const main = async () => {
         model: rates.model,
         messages: req.body.messages,
         maxTokens: quote.maxOutputTokens,
+        // tools, tool_choice, temperature, seed, response_format…
+        extra,
         timeoutMs: timeoutForTokens(
           quote.maxOutputTokens,
           Number(process.env.TIMEOUT_BASE_MS ?? 20000),
@@ -184,11 +203,24 @@ const main = async () => {
         })
       }
 
+      // The upstream's own message, not one rebuilt from its text. A tool-call
+      // reply has content: null and the payload in tool_calls; reconstructing
+      // it by hand threw the payload away.
+      const message = buildResponseMessage(result.message, result.content)
+
+      // An upstream that claims tool calls must return them. Checked rather
+      // than trusted, so a change upstream surfaces in our logs and not in a
+      // buyer's agent three weeks later.
+      const consistency = checkResponseConsistency(message, result.finishReason)
+      if (!consistency.ok) {
+        console.warn(`[upstream] ${rates.model}: ${consistency.reason}`)
+      }
+
       res.json({
         model: rates.model,
         choices: [{
           index: 0,
-          message: { role: 'assistant', content: result.content },
+          message,
           finish_reason: result.finishReason
         }],
         usage: result.usage,
@@ -203,6 +235,11 @@ const main = async () => {
           // internalizeAction to take receipt of the change.
           refundPayment: refund?.ok ? refund.payment : null,
           quotedInputTokens: quote.inputTokens,
+          // Tool schemas are billed by the upstream as prompt tokens. Quoting
+          // messages only meant the provider served them free, and ate the
+          // difference whenever a reply used its full output allowance.
+          quotedToolTokens: quote.breakdown?.toolTokens ?? 0,
+          toolCalls: consistency.toolCalls ?? 0,
           maxOutputTokens: quote.maxOutputTokens,
           actualUsage: result.usage,
           durationMs: Date.now() - started,
