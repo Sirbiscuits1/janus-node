@@ -12,6 +12,7 @@ import { corsMiddleware } from './lib/cors.js'
 import {
   buildUpstreamBody, buildResponseMessage, checkResponseConsistency
 } from './lib/passthrough.js'
+import { Capabilities, buildModelsResponse } from './lib/capabilities.js'
 
 const PORT = Number(process.env.PORT) || 8080
 const OVERLAY_URL = process.env.OVERLAY_URL ?? 'https://overlay.janusprotocol.xyz'
@@ -72,6 +73,18 @@ const main = async () => {
     identityKey
   })
 
+  // What each model can actually do, measured rather than declared. Probing
+  // runs in the background and never blocks serving: until a model has been
+  // tried its capabilities read "unknown", which is the truth.
+  const capabilities = new Capabilities({
+    baseUrl: UPSTREAM_BASE_URL,
+    apiKey: UPSTREAM_API_KEY
+  })
+
+  const probeAll = () => capabilities
+    .ensure(rateCard.models())
+    .catch((err) => console.warn(`[capabilities] ${err.message}`))
+
   try {
     await rateCard.refresh()
   } catch (err) {
@@ -81,6 +94,7 @@ const main = async () => {
     console.error('Serving 503 on inference until the overlay is reachable.')
   }
   rateCard.start()
+  probeAll()
 
   const app = express()
 
@@ -97,8 +111,31 @@ const main = async () => {
       identityKey,
       endpoint: ENDPOINT,
       ...rateCard.describe(),
+      capabilities: capabilities.all(),
       upstream: { baseUrl: UPSTREAM_BASE_URL, configured: Boolean(UPSTREAM_API_KEY) }
     })
+  })
+
+  /**
+   * The standard model list, so a buyer can see what this provider serves —
+   * and crucially what each model can DO — before paying for anything.
+   *
+   * Standard fields are exactly standard; everything of ours is under `janus`
+   * where it cannot collide with a client's expectations.
+   */
+  app.get('/v1/models', (req, res) => {
+    // Re-probe anything published since the last check. Fire and forget: this
+    // response reports what is known now, not what will be known in 4 seconds.
+    probeAll()
+    res.json(buildModelsResponse({ rateCard, capabilities, endpoint: ENDPOINT }))
+  })
+
+  /** Force a re-probe, e.g. after pointing at a different upstream. */
+  app.post('/admin/reprobe', async (req, res) => {
+    if (!requireAdmin(req, res)) return
+    capabilities.reset(req.body?.model ?? null)
+    await capabilities.ensure(rateCard.models())
+    res.json({ ok: true, capabilities: capabilities.all() })
   })
 
   // OpenAI-shaped so any existing client works, with payment in front.
@@ -351,6 +388,7 @@ const main = async () => {
         console.warn(`Published, but rate card refresh failed: ${err.message}`)
       })
 
+      probeAll()
       res.json({ ok: true, ...result, listing, serving: rateCard.models() })
     } catch (err) {
       console.error('Publish failed:', err.message)
